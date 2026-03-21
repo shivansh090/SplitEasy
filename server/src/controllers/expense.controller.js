@@ -26,4 +26,30 @@ const getGroupBalances = async (req, res, next) => {
   }
 };
 
-module.exports = { getGroupExpenses, getGroupBalances };
+const updateExpense = async (req, res, next) => {
+  try {
+    const updates = { ...req.validatedBody };
+    if (updates.expenseDate && typeof updates.expenseDate === 'string') {
+      updates.expenseDate = new Date(updates.expenseDate);
+    }
+    const expense = await expenseService.updateExpense(
+      req.params.expenseId,
+      req.user._id,
+      updates
+    );
+    ApiResponse.success(res, { expense });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteExpense = async (req, res, next) => {
+  try {
+    await expenseService.deleteExpense(req.params.expenseId, req.user._id);
+    ApiResponse.success(res, { message: 'Expense deleted' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { getGroupExpenses, getGroupBalances, updateExpense, deleteExpense };

@@ -9,6 +9,7 @@ export default function ChatWindow({
   sending,
   onSend,
   currentUserId,
+  emptyText,
 }) {
   const bottomRef = useRef(null);
 
@@ -28,7 +29,7 @@ export default function ChatWindow({
             </svg>
             <p className="font-medium text-lg">Start chatting!</p>
             <p className="text-sm mt-1 text-center max-w-xs">
-              Type an expense like "I paid 200 for snacks, split with everyone"
+              {emptyText || 'Type an expense like "I paid 200 for snacks, split with everyone"'}
             </p>
           </div>
         ) : (

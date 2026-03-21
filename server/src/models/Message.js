@@ -4,8 +4,14 @@ const messageSchema = new mongoose.Schema({
   group: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Group',
-    required: true,
-    index: true,
+    default: null,
+    index: { sparse: true },
+  },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null,
+    index: { sparse: true },
   },
   sender: {
     type: mongoose.Schema.Types.ObjectId,
