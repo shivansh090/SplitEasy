@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import GroupChat from './pages/GroupChat';
+import PersonalChat from './pages/PersonalChat';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -48,6 +49,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/personal"
+        element={
+          <ProtectedRoute>
+            <PersonalChat />
           </ProtectedRoute>
         }
       />

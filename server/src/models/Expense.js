@@ -16,8 +16,12 @@ const expenseSchema = new mongoose.Schema({
   group: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Group',
-    required: true,
-    index: true,
+    default: null,
+    index: { sparse: true },
+  },
+  isPersonal: {
+    type: Boolean,
+    default: false,
   },
   paidBy: {
     type: mongoose.Schema.Types.ObjectId,
@@ -56,5 +60,7 @@ const expenseSchema = new mongoose.Schema({
 }, {
   timestamps: true,
 });
+
+expenseSchema.index({ createdBy: 1, isPersonal: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Expense', expenseSchema);

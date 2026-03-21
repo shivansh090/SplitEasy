@@ -86,4 +86,85 @@ const validateAndCleanExpense = (llmOutput, members, senderId, senderName) => {
   };
 };
 
-module.exports = { validateAndCleanExpense, resolveMemberName };
+const validCategories = ['food', 'transport', 'shopping', 'entertainment', 'bills', 'rent', 'groceries', 'medical', 'travel', 'general'];
+
+const validatePersonalAction = (llmOutput, userId) => {
+  const action = llmOutput.action || (llmOutput.isExpense ? 'create' : 'chat');
+
+  if (action === 'chat' || (!llmOutput.action && !llmOutput.isExpense)) {
+    return {
+      action: 'chat',
+      reply: llmOutput.reply || "I didn't quite catch that. Could you rephrase?",
+    };
+  }
+
+  if (action === 'delete') {
+    if (!llmOutput.targetExpenseId) {
+      return { action: 'chat', reply: "Which expense do you want to delete? Could you be more specific?" };
+    }
+    return {
+      action: 'delete',
+      targetExpenseId: llmOutput.targetExpenseId,
+      confirmation: llmOutput.confirmation || 'Expense deleted.',
+    };
+  }
+
+  if (action === 'update') {
+    if (!llmOutput.targetExpenseId) {
+      return { action: 'chat', reply: "Which expense do you want to update? Could you be more specific?" };
+    }
+    const updates = {};
+    if (llmOutput.updates) {
+      if (llmOutput.updates.amount && typeof llmOutput.updates.amount === 'number' && llmOutput.updates.amount > 0) {
+        updates.amount = llmOutput.updates.amount;
+      }
+      if (llmOutput.updates.description) updates.description = llmOutput.updates.description;
+      if (llmOutput.updates.category && validCategories.includes(llmOutput.updates.category)) {
+        updates.category = llmOutput.updates.category;
+      }
+    }
+    if (Object.keys(updates).length === 0) {
+      return { action: 'chat', reply: "What would you like to change about that expense?" };
+    }
+    return {
+      action: 'update',
+      targetExpenseId: llmOutput.targetExpenseId,
+      updates,
+      confirmation: llmOutput.confirmation || 'Expense updated.',
+    };
+  }
+
+  // action === 'create' (default for new expenses)
+  const { expense, confirmation } = llmOutput;
+
+  if (!expense || !expense.amount || !expense.description) {
+    throw new ApiError(400, 'LLM output missing required expense fields');
+  }
+
+  if (typeof expense.amount !== 'number' || expense.amount <= 0) {
+    throw new ApiError(400, 'Invalid expense amount');
+  }
+
+  const category = validCategories.includes(expense.category) ? expense.category : 'general';
+
+  return {
+    action: 'create',
+    expense: {
+      paidBy: userId,
+      amount: expense.amount,
+      description: expense.description,
+      category,
+    },
+    confirmation: confirmation || `Expense of ₹${expense.amount} recorded.`,
+  };
+};
+
+// Backward compatible alias
+const validatePersonalExpense = (llmOutput, userId) => {
+  const result = validatePersonalAction(llmOutput, userId);
+  if (result.action === 'chat') return { isExpense: false, reply: result.reply };
+  if (result.action === 'create') return { isExpense: true, expense: result.expense, confirmation: result.confirmation };
+  return result;
+};
+
+module.exports = { validateAndCleanExpense, validatePersonalExpense, validatePersonalAction, resolveMemberName };

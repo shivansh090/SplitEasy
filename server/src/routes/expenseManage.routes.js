@@ -1,6 +1,6 @@
 const { Router } = require('express');
 const { z } = require('zod');
-const { getGroupExpenses, getGroupBalances, updateExpense, deleteExpense } = require('../controllers/expense.controller');
+const { updateExpense, deleteExpense } = require('../controllers/expense.controller');
 const auth = require('../middleware/auth.middleware');
 const validate = require('../middleware/validate.middleware');
 
@@ -14,7 +14,7 @@ const updateExpenseSchema = z.object({
 
 router.use(auth);
 
-router.get('/:id/expenses', getGroupExpenses);
-router.get('/:id/balances', getGroupBalances);
+router.put('/:expenseId', validate(updateExpenseSchema), updateExpense);
+router.delete('/:expenseId', deleteExpense);
 
 module.exports = router;
