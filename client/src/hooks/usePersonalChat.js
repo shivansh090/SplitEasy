@@ -22,42 +22,8 @@ export function usePersonalChat() {
     setSending(true);
     try {
       const res = await api.post('/personal/chat', { content });
-      const { aiMessage, expense } = res.data.data;
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          _id: Date.now().toString() + '-user',
-          type: 'user_message',
-          content,
-          sender: JSON.parse(localStorage.getItem('user')),
-          createdAt: new Date().toISOString(),
-        },
-        ...(expense
-          ? [
-              {
-                _id: Date.now().toString() + '-expense',
-                type: 'expense_created',
-                content: JSON.stringify({
-                  description: expense.description,
-                  amount: expense.amount,
-                  paidBy: expense.paidBy?.name || 'You',
-                  category: expense.category,
-                  splits: [],
-                }),
-                relatedExpense: expense,
-                createdAt: new Date().toISOString(),
-              },
-            ]
-          : []),
-        {
-          _id: Date.now().toString() + '-ai',
-          type: 'ai_response',
-          content: aiMessage,
-          createdAt: new Date().toISOString(),
-        },
-      ]);
-
+      // Re-fetch all messages so we get every expense card the backend created
+      await fetchMessages();
       return res.data.data;
     } catch (err) {
       console.error('Failed to send personal message:', err);
