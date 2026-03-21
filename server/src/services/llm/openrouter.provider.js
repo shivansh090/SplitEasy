@@ -73,43 +73,24 @@ class OpenRouterProvider extends LLMProvider {
 
         console.log(`[OpenRouter] LLM output (${text.length} chars): ${text.slice(0, 200)}...`);
 
-        // Parse all JSON objects from response (LLM may return multiple for multi-action messages)
-        const results = [];
-        let remaining = text;
-        while (remaining.length > 0) {
-          const match = remaining.match(/\{[\s\S]*?\}(?=\s*\{|\s*$)/);
-          if (!match) {
-            // Try greedy match for nested objects
-            const greedyMatch = remaining.match(/\{[\s\S]*\}/);
-            if (greedyMatch) {
-              try {
-                results.push(JSON.parse(greedyMatch[0]));
-              } catch {
-                // Try to split by }{ pattern for adjacent objects
-                const parts = greedyMatch[0].split(/\}\s*\{/).map((p, i, arr) => {
-                  if (i === 0) return p + '}';
-                  if (i === arr.length - 1) return '{' + p;
-                  return '{' + p + '}';
-                });
-                for (const part of parts) {
-                  try { results.push(JSON.parse(part)); } catch { /* skip */ }
-                }
-              }
-            }
-            break;
-          }
-          try {
-            results.push(JSON.parse(match[0]));
-          } catch { /* skip malformed */ }
-          remaining = remaining.slice(match.index + match[0].length);
+        // Try parsing the full text as JSON first (handles arrays and objects)
+        const trimmed = text.trim();
+        try {
+          return JSON.parse(trimmed);
+        } catch { /* not clean JSON, try extraction */ }
+
+        // Extract JSON array [...] or object {...} from surrounding text
+        const arrayMatch = trimmed.match(/\[[\s\S]*\]/);
+        if (arrayMatch) {
+          try { return JSON.parse(arrayMatch[0]); } catch { /* fall through */ }
         }
 
-        if (results.length === 0) {
-          throw new Error(`LLM did not return valid JSON. Raw: ${text.slice(0, 300)}`);
+        const objMatch = trimmed.match(/\{[\s\S]*\}/);
+        if (objMatch) {
+          try { return JSON.parse(objMatch[0]); } catch { /* fall through */ }
         }
 
-        // Return single object or array for multi-action
-        return results.length === 1 ? results[0] : results;
+        throw new Error(`LLM did not return valid JSON. Raw: ${trimmed.slice(0, 300)}`);
       } catch (error) {
         const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
         console.error(`[OpenRouter] Attempt ${attempt + 1} failed after ${elapsed}s:`, {
@@ -160,11 +141,13 @@ class OpenRouterProvider extends LLMProvider {
 
   async parsePersonalExpense(message, senderName, recentExpenses = []) {
     const expSummary = recentExpenses.length > 0
-      ? JSON.stringify(recentExpenses.map((e) => ({ _id: e._id, description: e.description, amount: e.amount, category: e.category })))
+      ? JSON.stringify(recentExpenses.map((e) => ({ _id: e._id, description: e.description, amount: e.amount, category: e.category, date: e.expenseDate || e.createdAt })))
       : 'none';
+    const today = new Date().toISOString().split('T')[0];
     console.log(`[OpenRouter] parsePersonalExpense called | sender: ${senderName} | message: "${message.slice(0, 100)}" | recent: ${recentExpenses.length}`);
     const prompt = PERSONAL_EXPENSE_PARSE_PROMPT
       .replace('{{MESSAGE}}', message)
+      .replace('{{TODAY}}', today)
       .replace('{{SENDER}}', senderName)
       .replace('{{RECENT_EXPENSES}}', expSummary);
     return this._callLLM(prompt);

@@ -122,6 +122,10 @@ const validatePersonalAction = (llmOutput, userId) => {
       if (llmOutput.updates.category && validCategories.includes(llmOutput.updates.category)) {
         updates.category = llmOutput.updates.category;
       }
+      if (llmOutput.updates.date) {
+        const d = new Date(llmOutput.updates.date);
+        if (!isNaN(d.getTime())) updates.expenseDate = d;
+      }
     }
     if (Object.keys(updates).length === 0) {
       return { action: 'chat', reply: "What would you like to change about that expense?" };
@@ -147,6 +151,12 @@ const validatePersonalAction = (llmOutput, userId) => {
 
   const category = validCategories.includes(expense.category) ? expense.category : 'general';
 
+  let expenseDate = null;
+  if (expense.date) {
+    const d = new Date(expense.date);
+    if (!isNaN(d.getTime())) expenseDate = d;
+  }
+
   return {
     action: 'create',
     expense: {
@@ -154,6 +164,7 @@ const validatePersonalAction = (llmOutput, userId) => {
       amount: expense.amount,
       description: expense.description,
       category,
+      expenseDate,
     },
     confirmation: confirmation || `Expense of ₹${expense.amount} recorded.`,
   };

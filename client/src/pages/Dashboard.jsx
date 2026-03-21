@@ -25,18 +25,20 @@ export default function Dashboard() {
   const [showModal, setShowModal] = useState(false);
   const [month, setMonth] = useState(null);
   const [year, setYear] = useState(null);
+  const [day, setDay] = useState(null);
 
   const { analytics: dashboardData, loading: dashLoading, fetchDashboardAnalytics } = useAnalytics();
   const { analytics: personalData, loading: persLoading, fetchPersonalAnalytics } = useAnalytics();
 
   useEffect(() => {
-    if (tab === 'overview') fetchDashboardAnalytics(month, year);
-    if (tab === 'personal') fetchPersonalAnalytics(month, year);
-  }, [tab, month, year, fetchDashboardAnalytics, fetchPersonalAnalytics]);
+    if (tab === 'overview') fetchDashboardAnalytics(month, year, day);
+    if (tab === 'personal') fetchPersonalAnalytics(month, year, day);
+  }, [tab, month, year, day, fetchDashboardAnalytics, fetchPersonalAnalytics]);
 
-  const handleMonthChange = (m, y) => {
+  const handleDateChange = (m, y, d) => {
     setMonth(m);
     setYear(y);
+    setDay(d || null);
   };
 
   const handleLogout = () => {
@@ -89,7 +91,7 @@ export default function Dashboard() {
                 {tab === 'overview' ? 'All Expenses' : 'Personal Expenses'}
               </h2>
               <div className="flex items-center gap-3">
-                <MonthPicker month={month} year={year} onChange={handleMonthChange} />
+                <MonthPicker month={month} year={year} day={day} onChange={handleDateChange} />
                 {tab === 'personal' && (
                   <Link
                     to="/personal"

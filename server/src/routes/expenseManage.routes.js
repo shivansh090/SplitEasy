@@ -10,6 +10,7 @@ const updateExpenseSchema = z.object({
   amount: z.number().positive('Amount must be positive').optional(),
   description: z.string().min(1).max(200).optional(),
   category: z.enum(['food', 'transport', 'shopping', 'entertainment', 'bills', 'rent', 'groceries', 'medical', 'travel', 'general']).optional(),
+  expenseDate: z.string().datetime({ offset: true }).or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).optional(),
 });
 
 router.use(auth);

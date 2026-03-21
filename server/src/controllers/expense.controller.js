@@ -28,10 +28,14 @@ const getGroupBalances = async (req, res, next) => {
 
 const updateExpense = async (req, res, next) => {
   try {
+    const updates = { ...req.validatedBody };
+    if (updates.expenseDate && typeof updates.expenseDate === 'string') {
+      updates.expenseDate = new Date(updates.expenseDate);
+    }
     const expense = await expenseService.updateExpense(
       req.params.expenseId,
       req.user._id,
-      req.validatedBody
+      updates
     );
     ApiResponse.success(res, { expense });
   } catch (error) {

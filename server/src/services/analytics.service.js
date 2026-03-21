@@ -19,7 +19,12 @@ const getDailyTrend = async (matchBase, month, year) => {
   ]).then((res) => res.map((d) => ({ day: d._id.day, total: Math.round(d.total * 100) / 100, count: d.count })));
 };
 
-const buildDateFilter = (month, year) => {
+const buildDateFilter = (month, year, day) => {
+  if (day && month && year) {
+    const start = new Date(year, month - 1, day);
+    const end = new Date(year, month - 1, day + 1);
+    return { createdAt: { $gte: start, $lt: end } };
+  }
   if (month && year) {
     return { createdAt: { $gte: new Date(year, month - 1, 1), $lt: new Date(year, month, 1) } };
   }
@@ -29,9 +34,9 @@ const buildDateFilter = (month, year) => {
   return {};
 };
 
-const getPersonalAnalytics = async (userId, { month, year } = {}) => {
+const getPersonalAnalytics = async (userId, { month, year, day } = {}) => {
   const userObjId = new mongoose.Types.ObjectId(userId);
-  const dateFilter = buildDateFilter(month, year);
+  const dateFilter = buildDateFilter(month, year, day);
   const match = { createdBy: userObjId, isPersonal: true, ...dateFilter };
 
   const personalBase = { createdBy: userObjId, isPersonal: true };
@@ -94,9 +99,9 @@ const getPersonalAnalytics = async (userId, { month, year } = {}) => {
   };
 };
 
-const getGroupAnalytics = async (groupId, { month, year } = {}) => {
+const getGroupAnalytics = async (groupId, { month, year, day } = {}) => {
   const groupObjId = new mongoose.Types.ObjectId(groupId);
-  const dateFilter = buildDateFilter(month, year);
+  const dateFilter = buildDateFilter(month, year, day);
   const match = { group: groupObjId, ...dateFilter };
 
   const [categoryBreakdown, monthlyTrend, memberBreakdown, summary] = await Promise.all([
@@ -175,11 +180,11 @@ const getGroupAnalytics = async (groupId, { month, year } = {}) => {
   };
 };
 
-const getDashboardAnalytics = async (userId, { month, year } = {}) => {
+const getDashboardAnalytics = async (userId, { month, year, day } = {}) => {
   const user = await User.findById(userId);
   const groupIds = (user.groups || []).map((g) => new mongoose.Types.ObjectId(g));
   const userObjId = new mongoose.Types.ObjectId(userId);
-  const dateFilter = buildDateFilter(month, year);
+  const dateFilter = buildDateFilter(month, year, day);
 
   const match = {
     $or: [

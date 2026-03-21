@@ -67,7 +67,7 @@ const getGroupExpenses = async (groupId, page = 1, limit = 50) => {
   };
 };
 
-const createPersonalExpense = async ({ paidBy, amount, description, category, originalMessage, createdBy }) => {
+const createPersonalExpense = async ({ paidBy, amount, description, category, expenseDate, originalMessage, createdBy }) => {
   const expense = await Expense.create({
     group: null,
     isPersonal: true,
@@ -75,6 +75,7 @@ const createPersonalExpense = async ({ paidBy, amount, description, category, or
     amount,
     description,
     category,
+    expenseDate: expenseDate || new Date(),
     splitType: 'equal',
     splits: [],
     originalMessage,
@@ -136,7 +137,7 @@ const updateExpense = async (expenseId, userId, updates) => {
     throw new ApiError(403, 'You can only edit your own expenses');
   }
 
-  const allowed = ['amount', 'description', 'category'];
+  const allowed = ['amount', 'description', 'category', 'expenseDate'];
   for (const key of allowed) {
     if (updates[key] !== undefined) expense[key] = updates[key];
   }
@@ -170,7 +171,7 @@ const getRecentExpensesSummary = async (userId, limit = 5) => {
   })
     .sort({ createdAt: -1 })
     .limit(limit)
-    .select('description amount category createdAt _id');
+    .select('description amount category expenseDate createdAt _id');
   return expenses;
 };
 

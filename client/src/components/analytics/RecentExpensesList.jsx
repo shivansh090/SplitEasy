@@ -32,7 +32,9 @@ export default function RecentExpensesList({ expenses, onUpdate }) {
 
   const handleEdit = (exp) => {
     setEditingExp(exp);
-    setEditForm({ amount: exp.amount, description: exp.description, category: exp.category });
+    const dateVal = exp.expenseDate || exp.createdAt;
+    const localDate = dateVal ? new Date(dateVal).toISOString().slice(0, 16) : '';
+    setEditForm({ amount: exp.amount, description: exp.description, category: exp.category, expenseDate: localDate });
   };
 
   const handleSave = async () => {
@@ -145,6 +147,15 @@ export default function RecentExpensesList({ expenses, onUpdate }) {
                 <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
               ))}
             </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Date & Time</label>
+            <input
+              type="datetime-local"
+              value={editForm.expenseDate || ''}
+              onChange={(e) => setEditForm((f) => ({ ...f, expenseDate: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
           </div>
           <div className="flex gap-2">
             <Button onClick={handleSave} loading={saving} className="flex-1">

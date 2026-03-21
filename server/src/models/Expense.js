@@ -49,6 +49,10 @@ const expenseSchema = new mongoose.Schema({
     default: 'equal',
   },
   splits: [splitSchema],
+  expenseDate: {
+    type: Date,
+    default: Date.now,
+  },
   originalMessage: {
     type: String,
   },

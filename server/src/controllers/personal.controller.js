@@ -55,6 +55,7 @@ const sendPersonalMessage = async (req, res, next) => {
             amount: parsed.expense.amount,
             description: parsed.expense.description,
             category: parsed.expense.category,
+            expenseDate: parsed.expense.expenseDate,
             originalMessage: content,
             createdBy: userId,
           });
