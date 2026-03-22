@@ -7,10 +7,10 @@ const getDailyTrend = async (matchBase, month, year) => {
   const start = new Date(year, month - 1, 1);
   const end = new Date(year, month, 1);
   return Expense.aggregate([
-    { $match: { ...matchBase, expenseDate: { $gte: start, $lt: end } } },
+    { $match: { ...matchBase, createdAt: { $gte: start, $lt: end } } },
     {
       $group: {
-        _id: { day: { $dayOfMonth: '$expenseDate' } },
+        _id: { day: { $dayOfMonth: '$createdAt' } },
         total: { $sum: '$amount' },
         count: { $sum: 1 },
       },
@@ -23,13 +23,13 @@ const buildDateFilter = (month, year, day) => {
   if (day && month && year) {
     const start = new Date(year, month - 1, day);
     const end = new Date(year, month - 1, day + 1);
-    return { expenseDate: { $gte: start, $lt: end } };
+    return { createdAt: { $gte: start, $lt: end } };
   }
   if (month && year) {
-    return { expenseDate: { $gte: new Date(year, month - 1, 1), $lt: new Date(year, month, 1) } };
+    return { createdAt: { $gte: new Date(year, month - 1, 1), $lt: new Date(year, month, 1) } };
   }
   if (year) {
-    return { expenseDate: { $gte: new Date(year, 0, 1), $lt: new Date(Number(year) + 1, 0, 1) } };
+    return { createdAt: { $gte: new Date(year, 0, 1), $lt: new Date(Number(year) + 1, 0, 1) } };
   }
   return {};
 };
@@ -50,7 +50,7 @@ const getPersonalAnalytics = async (userId, { month, year, day } = {}) => {
       { $match: personalBase },
       {
         $group: {
-          _id: { year: { $year: '$expenseDate' }, month: { $month: '$expenseDate' } },
+          _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
           total: { $sum: '$amount' },
           count: { $sum: 1 },
         },
@@ -114,7 +114,7 @@ const getGroupAnalytics = async (groupId, { month, year, day } = {}) => {
       { $match: { group: groupObjId } },
       {
         $group: {
-          _id: { year: { $year: '$expenseDate' }, month: { $month: '$expenseDate' } },
+          _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
           total: { $sum: '$amount' },
           count: { $sum: 1 },
         },
@@ -205,7 +205,7 @@ const getDashboardAnalytics = async (userId, { month, year, day } = {}) => {
       { $match: dashBase },
       {
         $group: {
-          _id: { year: { $year: '$expenseDate' }, month: { $month: '$expenseDate' } },
+          _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
           total: { $sum: '$amount' },
           count: { $sum: 1 },
         },
@@ -229,7 +229,7 @@ const getDashboardAnalytics = async (userId, { month, year, day } = {}) => {
 
   const recentExpenses = await Expense.find(match)
     .populate('paidBy', 'name email')
-    .sort({ expenseDate: -1 })
+    .sort({ createdAt: -1 })
     .limit(10);
 
   const grandTotal = categoryBreakdown.reduce((sum, c) => sum + c.total, 0);
@@ -259,7 +259,7 @@ const getDashboardAnalytics = async (userId, { month, year, day } = {}) => {
       category: e.category,
       isPersonal: e.isPersonal,
       paidBy: e.paidBy,
-      expenseDate: e.createdAt,
+      createdAt: e.createdAt,
     })),
   };
 };

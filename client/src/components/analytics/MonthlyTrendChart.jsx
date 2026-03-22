@@ -35,6 +35,7 @@ function SVGLineChart({ data, label }) {
         </linearGradient>
       </defs>
 
+      {/* Grid lines */}
       {[0, 0.25, 0.5, 0.75, 1].map((ratio) => (
         <line
           key={ratio}
@@ -47,9 +48,13 @@ function SVGLineChart({ data, label }) {
         />
       ))}
 
+      {/* Area fill */}
       <path d={areaPath} fill="url(#lineGrad)" />
+
+      {/* Line */}
       <path d={linePath} fill="none" stroke="url(#strokeGrad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
 
+      {/* Dots & labels */}
       {points.map((p, i) => (
         <g key={i}>
           <circle cx={p.x} cy={p.y} r="4" fill="#6366f1" stroke="white" strokeWidth="2" />
@@ -75,7 +80,7 @@ export default function MonthlyTrendChart({ data, dailyData }) {
     return <p className="text-center text-gray-400 text-sm py-6">No trend data yet</p>;
   }
 
-  const currentData = view === 'daily' ? (dailyData || []) : (data || []);
+  const currentData = view === 'daily' && hasDaily ? dailyData : data || [];
 
   const labelFn = view === 'daily'
     ? (p) => `${p.day || ''}`
@@ -83,32 +88,30 @@ export default function MonthlyTrendChart({ data, dailyData }) {
 
   return (
     <div>
-      {/* Always show both toggles */}
-      <div className="flex gap-1 mb-3">
-        <button
-          onClick={() => setView('monthly')}
-          className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
-            view === 'monthly' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-400 hover:text-gray-600'
-          }`}
-        >
-          Monthly
-        </button>
-        <button
-          onClick={() => setView('daily')}
-          className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
-            view === 'daily' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-400 hover:text-gray-600'
-          }`}
-        >
-          Daily
-        </button>
-      </div>
-      {currentData.length > 0 ? (
-        <SVGLineChart data={currentData} label={labelFn} />
-      ) : (
-        <p className="text-center text-gray-400 text-sm py-6">
-          {view === 'daily' ? 'Select a month to see daily breakdown' : 'No monthly data yet'}
-        </p>
+      {/* View toggle */}
+      {(hasDaily || hasMonthly) && (
+        <div className="flex gap-1 mb-3">
+          <button
+            onClick={() => setView('monthly')}
+            className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+              view === 'monthly' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            Monthly
+          </button>
+          {hasDaily && (
+            <button
+              onClick={() => setView('daily')}
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                view === 'daily' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              Daily
+            </button>
+          )}
+        </div>
       )}
+      <SVGLineChart data={currentData} label={labelFn} />
     </div>
   );
 }
