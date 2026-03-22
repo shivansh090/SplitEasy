@@ -1,25 +1,25 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import api from '../api/axios';
 
 const CACHE_TTL = 60000; // 1 minute
+const cache = {}; // module-level — survives component unmount
+
+const buildParams = (month, year, day) => {
+  const params = {};
+  if (month) params.month = month;
+  if (year) params.year = year;
+  if (day) params.day = day;
+  return { params };
+};
+
+const cacheKey = (prefix, month, year, day) => `${prefix}-${month || 0}-${year || 0}-${day || 0}`;
 
 export function useAnalytics() {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(false);
-  const cache = useRef({});
-
-  const buildParams = (month, year, day) => {
-    const params = {};
-    if (month) params.month = month;
-    if (year) params.year = year;
-    if (day) params.day = day;
-    return { params };
-  };
-
-  const cacheKey = (prefix, month, year, day) => `${prefix}-${month || 0}-${year || 0}-${day || 0}`;
 
   const fetchWithCache = async (key, url, month, year, day) => {
-    const cached = cache.current[key];
+    const cached = cache[key];
     if (cached && Date.now() - cached.ts < CACHE_TTL) {
       setAnalytics(cached.data);
       return cached.data;
@@ -29,7 +29,7 @@ export function useAnalytics() {
     try {
       const res = await api.get(url, buildParams(month, year, day));
       const data = res.data.data;
-      cache.current[key] = { data, ts: Date.now() };
+      cache[key] = { data, ts: Date.now() };
       setAnalytics(data);
       return data;
     } catch (err) {
@@ -39,7 +39,9 @@ export function useAnalytics() {
     }
   };
 
-  const invalidateCache = () => { cache.current = {}; };
+  const invalidateCache = () => {
+    Object.keys(cache).forEach((k) => delete cache[k]);
+  };
 
   const fetchDashboardAnalytics = useCallback(async (month, year, day) => {
     return fetchWithCache(cacheKey('dash', month, year, day), '/analytics/dashboard', month, year, day);

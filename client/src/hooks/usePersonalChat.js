@@ -1,19 +1,27 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import api from '../api/axios';
 
+// Module-level cache — survives component unmount
+const messageCache = { messages: null, ts: 0 };
+const CACHE_TTL = 60000;
+
 export function usePersonalChat() {
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(messageCache.messages || []);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
-  const fetched = useRef(false);
 
   const fetchMessages = useCallback(async (force = false) => {
-    if (fetched.current && !force) return;
+    if (!force && messageCache.messages && Date.now() - messageCache.ts < CACHE_TTL) {
+      setMessages(messageCache.messages);
+      return;
+    }
     setLoading(true);
     try {
       const res = await api.get('/personal/messages');
-      setMessages(res.data.data.messages);
-      fetched.current = true;
+      const data = res.data.data.messages;
+      messageCache.messages = data;
+      messageCache.ts = Date.now();
+      setMessages(data);
     } catch (err) {
       console.error('Failed to fetch personal messages:', err);
     } finally {
@@ -25,7 +33,7 @@ export function usePersonalChat() {
     setSending(true);
     try {
       const res = await api.post('/personal/chat', { content });
-      await fetchMessages(true); // force refetch after send
+      await fetchMessages(true); // force refetch + update cache
       return res.data.data;
     } catch (err) {
       console.error('Failed to send personal message:', err);
