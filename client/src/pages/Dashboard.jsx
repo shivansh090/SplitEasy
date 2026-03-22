@@ -18,14 +18,22 @@ const TABS = [
   { id: 'groups', label: 'Groups' },
 ];
 
+// Persist across navigation (module-level survives unmount)
+const saved = { tab: 'overview', month: null, year: null, day: null };
+
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState('overview');
+  const [tab, setTabRaw] = useState(saved.tab);
   const [showModal, setShowModal] = useState(false);
-  const [month, setMonth] = useState(null);
-  const [year, setYear] = useState(null);
-  const [day, setDay] = useState(null);
+  const [month, setMonthRaw] = useState(saved.month);
+  const [year, setYearRaw] = useState(saved.year);
+  const [day, setDayRaw] = useState(saved.day);
+
+  const setTab = (v) => { saved.tab = v; setTabRaw(v); };
+  const setMonth = (v) => { saved.month = v; setMonthRaw(v); };
+  const setYear = (v) => { saved.year = v; setYearRaw(v); };
+  const setDay = (v) => { saved.day = v; setDayRaw(v); };
 
   const { analytics: dashboardData, loading: dashLoading, fetchDashboardAnalytics, invalidateCache: invalidateDash } = useAnalytics();
   const { analytics: personalData, loading: persLoading, fetchPersonalAnalytics, invalidateCache: invalidatePers } = useAnalytics();
