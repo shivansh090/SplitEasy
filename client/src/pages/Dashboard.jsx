@@ -27,8 +27,8 @@ export default function Dashboard() {
   const [year, setYear] = useState(null);
   const [day, setDay] = useState(null);
 
-  const { analytics: dashboardData, loading: dashLoading, fetchDashboardAnalytics } = useAnalytics();
-  const { analytics: personalData, loading: persLoading, fetchPersonalAnalytics } = useAnalytics();
+  const { analytics: dashboardData, loading: dashLoading, fetchDashboardAnalytics, invalidateCache: invalidateDash } = useAnalytics();
+  const { analytics: personalData, loading: persLoading, fetchPersonalAnalytics, invalidateCache: invalidatePers } = useAnalytics();
 
   useEffect(() => {
     if (tab === 'overview') fetchDashboardAnalytics(month, year, day);
@@ -86,16 +86,26 @@ export default function Dashboard() {
         {(tab === 'overview' || tab === 'personal') && (
           <div className="space-y-6">
             {/* Header row */}
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">
-                {tab === 'overview' ? 'All Expenses' : 'Personal Expenses'}
-              </h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {tab === 'overview' ? 'All Expenses' : 'Personal Expenses'}
+                </h2>
+                {tab === 'personal' && (
+                  <Link
+                    to="/personal"
+                    className="sm:hidden bg-primary-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
+                  >
+                    + Add
+                  </Link>
+                )}
+              </div>
               <div className="flex items-center gap-3">
                 <MonthPicker month={month} year={year} day={day} onChange={handleDateChange} />
                 {tab === 'personal' && (
                   <Link
                     to="/personal"
-                    className="bg-primary-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
+                    className="hidden sm:block bg-primary-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors whitespace-nowrap"
                   >
                     + Add Expense
                   </Link>
@@ -136,8 +146,10 @@ export default function Dashboard() {
                     <RecentExpensesList
                       expenses={currentData.recentExpenses}
                       onUpdate={() => {
-                        if (tab === 'overview') fetchDashboardAnalytics(month, year);
-                        else fetchPersonalAnalytics(month, year);
+                        invalidateDash();
+                        invalidatePers();
+                        if (tab === 'overview') fetchDashboardAnalytics(month, year, day);
+                        else fetchPersonalAnalytics(month, year, day);
                       }}
                     />
                   </div>
