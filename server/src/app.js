@@ -11,7 +11,20 @@ const personalRoutes = require('./routes/personal.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
 const expenseManageRoutes = require('./routes/expenseManage.routes');
 
+const connectDB = require('./config/db');
+
 const app = express();
+
+// Ensure DB is connected before handling requests (needed for Vercel serverless)
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error('DB connection failed:', err.message);
+    res.status(503).json({ success: false, error: 'Database unavailable' });
+  }
+});
 
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '10kb' }));

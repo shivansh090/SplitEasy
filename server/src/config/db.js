@@ -6,6 +6,9 @@ const { mongoUri, useDB } = require('./env');
 let mongod = null;
 
 const connectDB = async () => {
+  // Already connected — skip (important for serverless cold starts)
+  if (mongoose.connection.readyState === 1) return;
+
   if (useDB) {
     try {
       const conn = await mongoose.connect(mongoUri);
